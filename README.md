@@ -16,7 +16,7 @@ Choose a built-in Neon frame, Celebration confetti, Twinkling sparks or Digital 
 
 ## Updates
 
-The experimental build includes an Updates panel with stable/beta selection and verification code adapted from ExcelProtocol FX. Its official repository is fixed to `StayExcellent666/ExcelInteractio`, but no release has been published. Local tests cover policy validation, checksum verification, and isolated installer behavior; a complete updater run after OBS exits remains required before publishing. Update prompts can request Windows administrator permission when installing.
+The experimental build includes an Updates panel with stable/beta selection and verification code adapted from ExcelProtocol FX. Its official repository is fixed to `StayExcellent666/ExcelInteractio`. Local tests cover policy validation, checksum verification, and isolated installer behavior; version 0.1.1-beta.1 is intended for a user-run end-to-end update test. GitHub's hosted runner could not open an OBS window. Update prompts can request Windows administrator permission when installing.
 
 ## ExcelProtocol pairing
 
@@ -36,4 +36,4 @@ The existing ExcelOverlay `.deps` directory was used for the isolated build. `cm
 
 ## Known work remaining
 
-Test the updater end to end before a release; verify pairing, chat commands and timer sends against the deployed ExcelProtocol server; support sources inside groups; properly host and test YouTube embeds; test audio, scene changes, overlapping commands, cleanup, and rate limits. Previous prototype settings may still contain an old plaintext Twitch token; saving settings with this version rewrites the settings without it. Revoke any old token that was exposed.
+Complete the user-run end-to-end updater test before any stable release; verify pairing, chat commands and timer sends against the deployed ExcelProtocol server; support sources inside groups; properly host and test YouTube embeds; test audio, scene changes, overlapping commands, cleanup, and rate limits. Previous prototype settings may still contain an old plaintext Twitch token; saving settings with this version rewrites the settings without it. Revoke any old token that was exposed.

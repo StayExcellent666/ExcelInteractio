@@ -1,6 +1,6 @@
 # Future updater requirements
 
-The local experimental updater is adapted from ExcelProtocol FX and uses the hard-coded repository `StayExcellent666/ExcelInteractio`. Update policy, helper checksum checks and an isolated installer smoke test have been run. A full update after OBS exits remains unverified, and no release has been published. Complete that test before publishing.
+The local experimental updater is adapted from ExcelProtocol FX and uses the hard-coded repository `StayExcellent666/ExcelInteractio`. Update policy, helper checksum checks and an isolated installer smoke test have been run. A full update after OBS exits remains unverified; the user requested a beta release to test that flow manually. GitHub's hosted runner could not open an OBS window, so it cannot substitute for that test.
 
 - Updates section: automatic checking and automatic download/install options default enabled for new users while preserving saved preferences. Stable is the default channel, with an optional beta channel and manual check.
 - Check roughly 20 seconds after OBS starts and every 24 hours. Reject drafts, malformed versions, downgrades and incompatible releases.

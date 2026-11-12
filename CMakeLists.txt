@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.28)
-project(excel-interactio VERSION 0.1.0 LANGUAGES CXX)
-set(INTERACTIO_VERSION "0.1.0" CACHE STRING "Release version, optionally with -beta.N")
+project(excel-interactio VERSION 0.1.1 LANGUAGES CXX)
+set(INTERACTIO_VERSION "0.1.1-beta.1" CACHE STRING "Release version, optionally with -beta.N")
 if(NOT INTERACTIO_VERSION MATCHES "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(-beta\\.[1-9][0-9]*)?$")
   message(FATAL_ERROR "INTERACTIO_VERSION must be X.Y.Z or X.Y.Z-beta.N")
 endif()

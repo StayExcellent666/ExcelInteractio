@@ -236,7 +236,7 @@ static bool editRule(QWidget *parent, QJsonObject &rule)
 {
     QDialog editor(parent); editor.setWindowTitle("Excel Interactio • Rule builder"); editor.resize(720, 690); styleBuilder(editor);
     auto *layout = new QVBoxLayout(&editor); layout->setContentsMargins(22, 20, 22, 20); layout->setSpacing(12);
-    auto *title = new QLabel("Rule builder"); title->setObjectName("title"); layout->addWidget(title);
+    auto *title = new QLabel("Interaction builder"); title->setObjectName("title"); layout->addWidget(title);
     auto *subtitle = new QLabel("// Choose a trigger and connect it to an action"); subtitle->setObjectName("muted"); layout->addWidget(subtitle);
     auto *ifBlock = new QFrame; ifBlock->setObjectName("codeBlock"); auto *ifLayout = new QVBoxLayout(ifBlock); ifLayout->setContentsMargins(15, 13, 15, 15);
     auto *ifLabel = new QLabel("IF  <trigger> {"); ifLabel->setObjectName("ifKeyword"); ifLayout->addWidget(ifLabel);
