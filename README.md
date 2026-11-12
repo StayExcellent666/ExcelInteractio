@@ -12,7 +12,7 @@ In OBS, open **Tools → Excel Interactio**. Rules appear as color-coded IF / TH
 
 Use the rule editor's dropdowns for IF, THEN and the source to cover, and its file picker to choose local media. Each source entry identifies its scene. Sources directly inside a scene are supported; items inside groups are not currently listed. The selected source must be visible and its scene displayed for the overlay to appear. Use **Test selected overlay** to preview a saved rule without Twitch. The temporary overlay is removed when it ends.
 
-Choose a built-in Neon frame, Celebration confetti, Twinkling sparks or Digital glitch; select a local media file; or paste a YouTube link. The rule builder links to [Kudos free overlays](https://kudos.tv/collections/freebies), which offers downloadable overlay packs; check each pack's license and supported format. YouTube support is experimental: YouTube can reject direct embeds, embedding may be disabled, and autoplay, audio or ads may prevent the intended result. The overlay stops after the specified duration, not automatically at the end of the clip.
+Choose a built-in Neon frame, Celebration confetti, Twinkling sparks or Digital glitch, or select a local media file. The rule builder links to [Kudos free overlays](https://kudos.tv/collections/freebies), which offers downloadable overlay packs; check each pack's license and supported format. The overlay stops after the specified duration, not automatically at the end of the clip.
 
 ## Updates
 
@@ -36,4 +36,5 @@ The existing ExcelOverlay `.deps` directory was used for the isolated build. `cm
 
 ## Known work remaining
 
-Complete the user-run end-to-end updater test before any stable release; verify pairing, chat commands and timer sends against the deployed ExcelProtocol server; support sources inside groups; properly host and test YouTube embeds; test audio, scene changes, overlapping commands, cleanup, and rate limits. Previous prototype settings may still contain an old plaintext Twitch token; saving settings with this version rewrites the settings without it. Revoke any old token that was exposed.
+Complete the user-run end-to-end updater test before any stable release; verify pairing, chat commands and timer sends against the deployed ExcelProtocol server; support sources inside groups; test audio, scene changes, overlapping commands, cleanup, and rate limits. Previous prototype settings may still contain an old plaintext Twitch token; saving settings with this version rewrites the settings without it. Revoke any old token that was exposed.
+

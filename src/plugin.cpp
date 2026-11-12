@@ -75,17 +75,6 @@ static void styleBuilder(QDialog &window)
 struct ActiveOverlay { QString sceneUuid; int64_t itemId; };
 static QList<ActiveOverlay> activeOverlays;
 static QString configPath() { char *p = obs_module_config_path("settings.json"); QString s = QString::fromUtf8(p); bfree(p); return s; }
-static QString videoId(const QString &text)
-{
-    QUrl u(text); QString host = u.host().toLower(), id;
-    if (host == "youtu.be") id = u.path().mid(1).section('/', 0, 0);
-    else if (host == "youtube.com" || host == "www.youtube.com" || host == "m.youtube.com") {
-        if (u.path() == "/watch") id = QUrlQuery(u).queryItemValue("v");
-        else if (u.path().startsWith("/shorts/") || u.path().startsWith("/embed/")) id = u.path().section('/', 2, 2);
-    }
-    static const QRegularExpression valid("^[A-Za-z0-9_-]{11}$");
-    return valid.match(id).hasMatch() ? id : QString();
-}
 static void sendMessage(QString message)
 {
     message.replace('\r', ' '); message.replace('\n', ' ');
@@ -123,25 +112,21 @@ static bool playOnTarget(const QJsonObject &c)
 {
     QString sceneUuid = c.value("scene_uuid").toString();
     bool validId = false; int64_t targetId = c.value("target_item_id").toString().toLongLong(&validId);
-    QString media = c.value("media").toString(); QString yt = videoId(media);
+    QString media = c.value("media").toString();
     const QString preset = media.startsWith("builtin:") ? media.mid(8) : QString();
     static const QSet<QString> allowedPresets{"neon", "confetti", "sparks", "glitch"};
     char *builtinPath = allowedPresets.contains(preset) ? obs_module_file(("overlays/" + preset + ".html").toUtf8().constData()) : nullptr;
     obs_source_t *sceneSource = obs_get_source_by_uuid(sceneUuid.toUtf8().constData());
     obs_scene_t *scene = sceneSource ? obs_scene_from_source(sceneSource) : nullptr;
     auto *target = scene && validId ? obs_scene_find_sceneitem_by_id(scene, targetId) : nullptr;
-    if (!target || (!builtinPath && !QFile::exists(media) && yt.isEmpty())) { if (builtinPath) bfree(builtinPath); if (sceneSource) obs_source_release(sceneSource); return false; }
+    if (!target || (!builtinPath && !QFileInfo(media).isFile())) { if (builtinPath) bfree(builtinPath); if (sceneSource) obs_source_release(sceneSource); return false; }
     obs_data_t *settings = obs_data_create();
     const char *type;
     if (builtinPath) {
         type = "browser_source"; obs_data_set_bool(settings, "is_local_file", true);
-        obs_data_set_string(settings, "local_file", builtinPath); bfree(builtinPath);
+        const QByteArray absolutePath = QFileInfo(QString::fromUtf8(builtinPath)).absoluteFilePath().toUtf8();
+        obs_data_set_string(settings, "local_file", absolutePath.constData()); bfree(builtinPath);
         obs_data_set_int(settings, "width", 960); obs_data_set_int(settings, "height", 540);
-    } else if (!yt.isEmpty()) {
-        type = "browser_source";
-        QString url = "https://www.youtube.com/embed/" + yt + "?autoplay=1&playsinline=1";
-        obs_data_set_string(settings, "url", url.toUtf8().constData());
-        obs_data_set_int(settings, "width", 1920); obs_data_set_int(settings, "height", 1080);
     } else {
         type = "ffmpeg_source"; obs_data_set_bool(settings, "is_local_file", true);
         obs_data_set_string(settings, "local_file", media.toUtf8().constData());
@@ -207,9 +192,6 @@ static void runCommand(const QString &message)
             if (type == "ffmpeg_source" && QFile::exists(media)) {
                 obs_data_set_bool(settings, "is_local_file", true);
                 obs_data_set_string(settings, "local_file", media.toUtf8().constData());
-            } else if (type == "browser_source" && !videoId(media).isEmpty()) {
-                QString url = "https://www.youtube.com/embed/" + videoId(media) + "?autoplay=1&playsinline=1";
-                obs_data_set_string(settings, "url", url.toUtf8().constData());
             } else {
                 blog(LOG_WARNING, "[chat-overlays] Invalid media or incompatible source type");
                 obs_data_release(settings); obs_source_release(sceneSource); return;
@@ -272,7 +254,7 @@ static bool editRule(QWidget *parent, QJsonObject &rule)
         if (d.value("scene_uuid").toString() == rule.value("scene_uuid").toString() && d.value("target_item_id").toString() == rule.value("target_item_id").toString()) { target.setCurrentIndex(i); break; }
     }
     QLineEdit content(rule.value("action").toString("overlay") == "message" ? rule.value("message").toString() : rule.value("media").toString());
-    QComboBox overlayChoice; overlayChoice.addItem("Use my file or YouTube link", "custom");
+    QComboBox overlayChoice; overlayChoice.addItem("Use a local file", "custom");
     overlayChoice.addItem("Neon frame", "builtin:neon"); overlayChoice.addItem("Celebration confetti", "builtin:confetti");
     overlayChoice.addItem("Twinkling sparks", "builtin:sparks"); overlayChoice.addItem("Digital glitch", "builtin:glitch");
     const int presetIndex = overlayChoice.findData(rule.value("media").toString()); if (presetIndex >= 0) { overlayChoice.setCurrentIndex(presetIndex); content.clear(); }
@@ -294,7 +276,7 @@ static bool editRule(QWidget *parent, QJsonObject &rule)
         const bool custom = overlayChoice.currentData().toString() == "custom";
         thenForm->setRowVisible(&target, overlay); thenForm->setRowVisible(&overlayChoice, overlay); thenForm->setRowVisible(&duration, overlay); thenForm->setRowVisible(&browse, overlay && custom);
         thenForm->setRowVisible(&content, !overlay || custom); thenForm->setRowVisible(browseSite, overlay);
-        if (auto *label = qobject_cast<QLabel *>(thenForm->labelForField(&content))) label->setText(overlay ? "File path / YouTube link" : "Chat message");
+        if (auto *label = qobject_cast<QLabel *>(thenForm->labelForField(&content))) label->setText(overlay ? "Local file path" : "Chat message");
         QString condition = timed ? QString("TIMER(%1 min)").arg(minutes.value()) : QString("CHAT(\"%1\")").arg(command.text().toHtmlEscaped());
         QString result = overlay ? QString("PLAY %1 on \"%2\"").arg(overlayChoice.currentText().toHtmlEscaped(), target.currentText().toHtmlEscaped()) : QString("SEND \"%1\"").arg(content.text().toHtmlEscaped());
         preview->setText(QString("<span style='color:#8291ad'>// live preview</span><br><span style='color:#c68bff'><b>IF</b></span> %1<br><span style='color:#62d8cb'><b>THEN</b></span> %2").arg(condition, result));
@@ -311,8 +293,8 @@ static bool editRule(QWidget *parent, QJsonObject &rule)
     QObject::connect(&buttons, &QDialogButtonBox::rejected, &editor, &QDialog::reject);
     QObject::connect(&buttons, &QDialogButtonBox::accepted, &editor, [&] {
         bool timed = trigger.currentData().toString() == "timer", overlay = action.currentData().toString() == "overlay";
-        if ((!timed && !command.text().trimmed().startsWith('!')) || (overlay && (target.currentIndex() < 1 || (overlayChoice.currentData().toString() == "custom" && content.text().trimmed().isEmpty()))) || (!overlay && content.text().trimmed().isEmpty())) {
-            QMessageBox::warning(&editor, "Check rule", "Enter a command starting with !, choose a source and media for overlays, or enter a chat message."); return;
+        if ((!timed && !command.text().trimmed().startsWith('!')) || (overlay && (target.currentIndex() < 1 || (overlayChoice.currentData().toString() == "custom" && !QFileInfo(content.text().trimmed()).isFile()))) || (!overlay && content.text().trimmed().isEmpty())) {
+            QMessageBox::warning(&editor, "Check rule", "Enter a command starting with !, choose a source and an existing local file for overlays, or enter a chat message."); return;
         }
         rule = QJsonObject{{"trigger_type", trigger.currentData().toString()}, {"action", action.currentData().toString()}, {"command", command.text().trimmed().toLower()}, {"minutes", minutes.value()}, {"duration_seconds", duration.value()}, {"cooldown_seconds", cooldown.value()}};
         if (overlay) { auto d = target.currentData().toMap(); rule["scene_uuid"] = d.value("scene_uuid").toString(); rule["scene"] = d.value("scene").toString(); rule["source"] = d.value("source").toString(); rule["target_item_id"] = d.value("target_item_id").toString(); }
@@ -360,7 +342,7 @@ static void configure()
     actions->addWidget(edit); actions->addWidget(test); actions->addWidget(remove); actions->addStretch(); layout->addLayout(actions);
     QObject::connect(add, &QPushButton::clicked, &dialog, [&] { QJsonObject c; if (editRule(&dialog, c)) { rules.append(c); refresh(); list.setCurrentRow(rules.size()-1); } });
     QObject::connect(edit, &QPushButton::clicked, &dialog, [&] { int r=list.currentRow(); if (r < 0 || r >= rules.size()) return; QJsonObject c=rules[r].toObject(); if (editRule(&dialog, c)) { rules[r]=c; refresh(); list.setCurrentRow(r); } });
-    QObject::connect(test, &QPushButton::clicked, &dialog, [&] { int r=list.currentRow(); if (r < 0 || r >= rules.size()) return; auto c=rules[r].toObject(); if (c.value("action").toString() != "overlay" || !c.contains("target_item_id") || !playOnTarget(c)) QMessageBox::warning(&dialog, "Cannot test overlay", "Select an overlay rule with a valid source and media file or link."); });
+    QObject::connect(test, &QPushButton::clicked, &dialog, [&] { int r=list.currentRow(); if (r < 0 || r >= rules.size()) return; auto c=rules[r].toObject(); if (c.value("action").toString() != "overlay" || !c.contains("target_item_id") || !playOnTarget(c)) QMessageBox::warning(&dialog, "Cannot test overlay", "Select an overlay rule with a valid source and local media file."); });
     QObject::connect(remove, &QPushButton::clicked, &dialog, [&] { int r=list.currentRow(); if (r < 0 || r >= rules.size()) return; if (QMessageBox::question(&dialog, "Delete rule?", "Delete the selected rule?", QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes) { rules.removeAt(r); refresh(); } });
     auto *buttons = new QDialogButtonBox(QDialogButtonBox::Save | QDialogButtonBox::Cancel); layout->addWidget(buttons);
     QObject::connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept); QObject::connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
@@ -397,3 +379,4 @@ bool obs_module_load(void)
     QTimer::singleShot(0, remote, [] { remote->start(); }); return true;
 }
 void obs_module_unload(void) { while (!activeOverlays.isEmpty()) { auto item = activeOverlays.last(); removeOverlay(item.sceneUuid, item.itemId); } if (updater) { updater->shutdown(); delete updater; updater=nullptr; } if (remote) { remote->shutdown(); delete remote; remote=nullptr; ruleTimer=nullptr; } }
+

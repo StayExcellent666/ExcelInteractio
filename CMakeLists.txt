@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.28)
 project(excel-interactio VERSION 0.1.1 LANGUAGES CXX)
-set(INTERACTIO_VERSION "0.1.1-beta.1" CACHE STRING "Release version, optionally with -beta.N")
+set(INTERACTIO_VERSION "0.1.1-beta.2" CACHE STRING "Release version, optionally with -beta.N")
 if(NOT INTERACTIO_VERSION MATCHES "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(-beta\\.[1-9][0-9]*)?$")
   message(FATAL_ERROR "INTERACTIO_VERSION must be X.Y.Z or X.Y.Z-beta.N")
 endif()
@@ -49,3 +49,4 @@ add_executable(interactio-ui-preview tests/ui-preview.cpp src/remote-client.cpp 
 target_link_libraries(interactio-ui-preview PRIVATE obs obs-frontend-api Qt6::Core Qt6::Widgets Qt6::Network advapi32)
 target_compile_definitions(interactio-ui-preview PRIVATE INTERACTIO_VERSION="0.1.0" INTERACTIO_GITHUB_REPOSITORY="StayExcellent666/ExcelInteractio")
 target_compile_options(interactio-ui-preview PRIVATE /utf-8 /EHsc)
+
