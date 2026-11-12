@@ -1,0 +1,15 @@
+/build/
+/build_x64/
+/build-packaging/
+/build-installer-smoke/
+/stage/
+/dist/
+/test-dist/
+/edge-preview/
+/.deps/
+/build-local.cmd
+/ui-preview.png
+/ui-overlay-preview.png
+/overlay-preview.png
+__pycache__/
+*.pyc

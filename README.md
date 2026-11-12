@@ -37,4 +37,3 @@ The existing ExcelOverlay `.deps` directory was used for the isolated build. `cm
 ## Known work remaining
 
 Test the updater end to end before a release; verify pairing, chat commands and timer sends against the deployed ExcelProtocol server; support sources inside groups; properly host and test YouTube embeds; test audio, scene changes, overlapping commands, cleanup, and rate limits. Previous prototype settings may still contain an old plaintext Twitch token; saving settings with this version rewrites the settings without it. Revoke any old token that was exposed.
-

@@ -1,0 +1,51 @@
+name: Build and test Windows package
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-2022
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756
+        with:
+          arch: x64
+      - name: Check source and release tooling
+        run: |
+          node --check data/overlays/overlay.js
+          python -m unittest discover -s tests -p test_release_tools.py -v
+          if ($LASTEXITCODE) { throw 'Release tests failed' }
+      - name: Prepare pinned OBS and Qt dependencies
+        run: ./scripts/prepare-deps.ps1
+      - name: Build and test policy
+        run: |
+          cmake -S . -B build_x64 -A x64 "-DEXCEL_OBS_DEPS=$PWD/.deps" -DINTERACTIO_VERSION=0.1.0-beta.1
+          if ($LASTEXITCODE) { throw 'Configuration failed' }
+          cmake --build build_x64 --config Release
+          if ($LASTEXITCODE) { throw 'Build failed' }
+          $env:PATH = "$PWD/.deps/obs-runtime/bin/64bit;$env:PATH"
+          & ./build_x64/Release/interactio-update-policy-test.exe
+          if ($LASTEXITCODE) { throw 'Update policy failed' }
+          $helper = Start-Process -FilePath ./build_x64/Release/excel-interactio-updater.exe -ArgumentList '--self-test' -WindowStyle Hidden -Wait -PassThru
+          if ($helper.ExitCode) { throw 'Updater helper self-test failed' }
+          cmake --install build_x64 --config Release --prefix stage
+          if ($LASTEXITCODE) { throw 'Staging failed' }
+      - name: Build test installer and manifest
+        run: |
+          ./scripts/package-release.ps1 -Version 0.1.0-beta.1 -Repository StayExcellent666/ExcelInteractio -Commit (git rev-parse HEAD)
+          if ($LASTEXITCODE) { throw 'Packaging failed' }
+      - name: Upload test package (not a release)
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: interactio-windows-test-package
+          path: dist/*
+          if-no-files-found: error
