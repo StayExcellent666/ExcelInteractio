@@ -25,7 +25,14 @@ $setupHash = (Get-FileHash -LiteralPath $setup -Algorithm SHA256).Hash.ToLowerIn
 $exe = Join-Path $fixture 'bin/64bit/obs64.exe'
 $obs = Start-Process -FilePath $exe -ArgumentList @('--portable', '--multi', '--disable-updater') -WorkingDirectory (Split-Path $exe) -WindowStyle Hidden -PassThru
 for ($i = 0; $i -lt 50 -and -not $obs.HasExited -and $obs.MainWindowHandle -eq 0; $i++) { Start-Sleep -Milliseconds 500; $obs.Refresh() }
-if ($obs.HasExited -or $obs.MainWindowHandle -eq 0) { throw 'Isolated OBS did not reach its main window.' }
+if ($obs.HasExited -or $obs.MainWindowHandle -eq 0) {
+    $logDir = Join-Path $fixture 'config/obs-studio/logs'
+    if (Test-Path -LiteralPath $logDir) {
+        $recent = Get-ChildItem -LiteralPath $logDir -File | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+        if ($recent) { Get-Content -LiteralPath $recent.FullName -Tail 60 | Write-Host }
+    }
+    throw 'Isolated OBS did not reach its main window.'
+}
 $launcherPath = (Resolve-Path -LiteralPath $Launcher).Path
 $arguments = @(('"' + $helper + '"'), ('"' + $setup + '"'), $setupHash, ('"' + $fixture + '"'), $obs.Id.ToString())
 $launch = Start-Process -FilePath $launcherPath -ArgumentList $arguments -WindowStyle Hidden -PassThru -Wait
@@ -49,3 +56,4 @@ foreach ($file in Get-ChildItem -LiteralPath (Resolve-Path -LiteralPath $StagePa
     }
 }
 Write-Host 'Updater waited for isolated OBS to close and installed the verified payload successfully.'
+
