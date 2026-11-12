@@ -28,7 +28,7 @@ jobs:
         run: ./scripts/prepare-deps.ps1
       - name: Build and test policy
         run: |
-          cmake -S . -B build_x64 -A x64 "-DEXCEL_OBS_DEPS=$PWD/.deps" -DINTERACTIO_VERSION=0.1.0-beta.1
+          cmake -S . -B build_x64 -A x64 "-DEXCEL_OBS_DEPS=$PWD/.deps" "-DINTERACTIO_VERSION=0.1.0-beta.1"
           if ($LASTEXITCODE) { throw 'Configuration failed' }
           cmake --build build_x64 --config Release
           if ($LASTEXITCODE) { throw 'Build failed' }
@@ -49,3 +49,4 @@ jobs:
           name: interactio-windows-test-package
           path: dist/*
           if-no-files-found: error
+
