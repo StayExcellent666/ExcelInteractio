@@ -43,10 +43,12 @@ jobs:
         run: |
           ./scripts/package-release.ps1 -Version 0.1.0-beta.1 -Repository StayExcellent666/ExcelInteractio -Commit (git rev-parse HEAD)
           if ($LASTEXITCODE) { throw 'Packaging failed' }
+      - name: Test update after isolated OBS exits
+        run: |
+          ./scripts/test-update-e2e.ps1 -Installer dist/ExcelInteractio-0.1.0-beta.1-windows-x64-setup.exe
       - name: Upload test package (not a release)
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         with:
           name: interactio-windows-test-package
           path: dist/*
           if-no-files-found: error
-
